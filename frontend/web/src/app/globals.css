@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   ShopFlow design tokens
+   --------------------------------------------------------------------------
+   Tailwind CSS v4 is configured *in CSS*. `@theme inline` publishes these custom
+   properties as real utility classes, which is why `bg-surface`,
+   `border-border-subtle` or `text-brand` work anywhere in the app.
+
+   Dark mode uses the `prefers-color-scheme` media query (Tailwind v4's default for
+   the `dark:` variant), so the storefront follows the OS setting without any
+   JavaScript theme switcher or flash of the wrong theme.
+   ========================================================================== */
+
+:root {
+  --background: #f7f7f8;
+  --foreground: #18181b;
+
+  --surface: #ffffff;
+  --surface-muted: #f1f1f3;
+  --border-subtle: #e3e3e7;
+
+  --brand: #4f46e5;
+  --brand-foreground: #ffffff;
+  --brand-soft: #eef2ff;
+
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #b91c1c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #09090b;
+    --foreground: #f4f4f5;
+
+    --surface: #131316;
+    --surface-muted: #1d1d21;
+    --border-subtle: #2b2b31;
+
+    --brand: #a5b4fc;
+    --brand-foreground: #101014;
+    --brand-soft: #1e1b4b;
+
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --danger: #f87171;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border-subtle: var(--border-subtle);
+
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-soft: var(--brand-soft);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
+  /* System font stack: no network request at build time (unlike next/font/google),
+     which keeps `next build` working in air-gapped CI. */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Visible, consistent keyboard focus everywhere. */
+:focus-visible {
+  outline-offset: 2px;
+}
+
+/* Respect users who prefer less motion. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,86 @@
+server:
+  port: ${SERVER_PORT:8081}
+  shutdown: graceful
+
+spring:
+  application:
+    name: user-service
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+  # ---- Database SENDIRI (prinsip: database per service) ----
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/shopflow_user}
+    username: ${DB_USER:shopflow}
+    password: ${DB_PASSWORD:shopflow}
+    hikari:
+      pool-name: user-service-pool
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+      minimum-idle: 2
+
+  jpa:
+    # open-in-view=false WAJIB untuk service: mencegah lazy-loading terjadi saat
+    # serialisasi JSON (penyebab N+1 query yang tidak terlihat).
+    open-in-view: false
+    hibernate:
+      # Skema dikelola Flyway, bukan Hibernate. `validate` = gagal cepat kalau
+      # entity dan tabel tidak sinkron.
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+shopflow:
+  jwt:
+    # WAJIB sama dengan api-gateway. Di produksi ambil dari secret manager.
+    secret: ${JWT_SECRET:shopflow-development-secret-key-change-me-32chars}
+    issuer: ${JWT_ISSUER:shopflow-identity}
+    access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:30m}
+  seed:
+    enabled: ${SEED_ENABLED:true}
+    admin-email: ${SEED_ADMIN_EMAIL:admin@shopflow.dev}
+    admin-password: ${SEED_ADMIN_PASSWORD:admin12345}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-}]"

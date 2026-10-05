@@ -1,0 +1,30 @@
+# Keep the Docker build context as small as possible.
+node_modules
+.pnpm-store
+.next
+out
+build
+dist
+
+# Local env files — never bake secrets into an image layer.
+.env
+.env.*
+!.env.example
+
+# Dev / editor noise
+.git
+.gitignore
+.cache
+.scaffold
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+Dockerfile
+.dockerignore
+README.md
+*.md
+.vscode
+.idea
+.DS_Store
+coverage

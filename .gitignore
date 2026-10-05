@@ -1,0 +1,78 @@
+# ============================================================
+# Java / Maven
+# ============================================================
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar.original
+hs_err_pid*
+replay_pid*
+.mvn/timing.properties
+
+# ============================================================
+# Node / Next.js
+# ============================================================
+node_modules/
+.pnpm-store/
+.next/
+out/
+dist/
+build/
+.turbo/
+.swc/
+*.tsbuildinfo
+next-env.d.ts
+
+# ============================================================
+# Environment & secrets (JANGAN pernah commit file .env asli)
+# ============================================================
+.env
+.env.local
+.env.*.local
+!.env.example
+*.pem
+*.p12
+*.jks
+
+# ============================================================
+# IDE / Editor
+# ============================================================
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+
+# ============================================================
+# OS
+# ============================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================================
+# Tooling & data lokal (tidak di-commit)
+# ============================================================
+.tooling/
+.docker-buildx/
+.docker-config/
+data/
+infra/data/
+logs/
+*.log
+
+# Artefak sementara dari generator/scaffolder
+.scaffold/
+*.tsbuildinfo
+unknown.html
+pnpm-workspace.yaml.keep
+
+# ============================================================
+# Kubernetes secrets (buat manual di cluster / pakai SealedSecrets)
+# ============================================================
+infra/k8s/**/secret.yaml
+infra/k8s/**/secret-*.yaml

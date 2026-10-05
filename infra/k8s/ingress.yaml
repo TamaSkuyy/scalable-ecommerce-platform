@@ -1,0 +1,61 @@
+# =====================================================================
+# Ingress - satu-satunya jalan masuk dari internet.
+#
+# Hanya API Gateway yang diekspos. Service lain tetap ClusterIP sehingga
+# header internal (X-User-Id, X-Internal-Token) tidak bisa dipalsukan
+# dari luar cluster. Ini bagian arsitektur, bukan sekadar konfigurasi.
+#
+# Prasyarat: ingress-nginx + cert-manager sudah terpasang di cluster.
+# =====================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shopflow-api
+  namespace: shopflow
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+
+    # Rate limiting di level Ingress (lapisan pertahanan tambahan;
+    # rate limiting per-user tetap perlu di Gateway - lihat roadmap).
+    nginx.ingress.kubernetes.io/limit-rps: "50"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
+
+    # Timeout: jangan biarkan request menggantung menahan worker nginx.
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "5"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "30"
+
+    # Ukuran body maksimal untuk request API.
+    nginx.ingress.kubernetes.io/proxy-body-size: "2m"
+
+    # Keamanan dasar
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: ["api.shopflow.example.com"]
+      secretName: shopflow-api-tls
+
+  rules:
+    - host: api.shopflow.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8080
+---
+# =====================================================================
+# CATATAN: frontend Next.js TIDAK ada di sini.
+#
+# Frontend punya siklus rilis berbeda dan biasanya di-deploy terpisah
+# (Vercel, Cloudflare, atau Deployment sendiri). Kalau kamu ingin
+# menggabungkannya, buat Ingress kedua untuk host frontend yang menunjuk
+# ke Service `web`, dan pastikan CORS_ALLOWED_ORIGINS di ConfigMap
+# sudah memuat domain frontend tersebut.
+# =====================================================================

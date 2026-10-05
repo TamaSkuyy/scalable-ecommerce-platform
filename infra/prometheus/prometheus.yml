@@ -1,0 +1,38 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: shopflow-local
+    env: development
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Semua service Spring Boot mengekspos /actuator/prometheus (Micrometer).
+  # Alamat host = nama service di docker-compose (DNS internal Docker).
+  - job_name: shopflow-backend
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - 'api-gateway:8080'
+          - 'user-service:8081'
+          - 'product-service:8082'
+          - 'cart-service:8083'
+          - 'order-service:8084'
+          - 'payment-service:8085'
+          - 'notification-service:8086'
+        labels:
+          tier: backend
+
+  # Eureka mengekspos metrik di port yang sama dengan UI-nya.
+  - job_name: eureka
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['discovery-service:8761']
+
+  - job_name: rabbitmq
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['rabbitmq:15692']

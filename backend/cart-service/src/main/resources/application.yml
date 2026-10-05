@@ -1,0 +1,127 @@
+server:
+  port: ${SERVER_PORT:8083}
+  shutdown: graceful
+
+spring:
+  application:
+    name: cart-service
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2s
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+  cloud:
+    openfeign:
+      # ------------------------------------------------------------------
+      # PENTING: JANGAN aktifkan `circuitbreaker.enabled`.
+      #
+      # Kalau diaktifkan, Spring Cloud membungkus setiap panggilan Feign dengan
+      # Resilience4JCircuitBreaker + TimeLimiter BAWAAN yang timeout-nya 1 detik,
+      # dengan nama instance otomatis seperti "ProductClientfindByIdLong".
+      # Akibatnya semua panggilan yang butuh >1 detik gagal - termasuk request
+      # pertama setelah service start - dan exception aslinya tertelan menjadi
+      # NoFallbackAvailableException("No fallback available.").
+      #
+      # Circuit breaker di proyek ini dipasang di lapisan pembungkus
+      # (lihat CartGateway / CatalogGateway) memakai anotasi @CircuitBreaker milik
+      # Resilience4j. Dengan begitu:
+      #   * nama instance jelas ("productService", bukan nama method Feign)
+      #   * fallback bisa menerjemahkan error teknis menjadi pesan yang berguna
+      #   * exception asli tetap terlihat di log
+      #
+      # Timeout diatur di bawah ini (connectTimeout/readTimeout), bukan TimeLimiter.
+      # ------------------------------------------------------------------
+      circuitbreaker:
+        enabled: false
+      client:
+        config:
+          default:
+            connectTimeout: 2000
+            readTimeout: 5000
+            loggerLevel: basic
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      productService:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        # 404/409 adalah jawaban bisnis yang sah, bukan tanda layanan bermasalah.
+        ignoreExceptions:
+          - com.shopflow.common.api.ResourceNotFoundException
+          - com.shopflow.common.api.ConflictException
+          - com.shopflow.common.api.BadRequestException
+
+  # ----------------------------------------------------------------------
+  # Tidak ada blok `timelimiter` di sini, dan itu disengaja.
+  #
+  # resilience4j-spring6 hanya menerapkan TimeLimiter lewat anotasi @TimeLimiter
+  # (yang mewajibkan method mengembalikan CompletableFuture). Anotasi
+  # @CircuitBreaker TIDAK memakai TimeLimiter, jadi menuliskan konfigurasi
+  # timelimiter di sini hanya akan menjadi "konfigurasi hantu" yang tidak pernah
+  # dibaca - lebih berbahaya daripada tidak ada, karena membuatmu mengira ada
+  # proteksi yang sebenarnya tidak jalan.
+  #
+  # Timeout yang benar-benar berlaku: connectTimeout & readTimeout Feign di atas.
+  # ----------------------------------------------------------------------
+
+shopflow:
+  internal:
+    token: ${INTERNAL_API_TOKEN:shopflow-internal-dev-token}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-}]"

@@ -1,0 +1,72 @@
+# =====================================================================
+# Dependabot - menjaga dependency tetap aman & terkini tanpa manual.
+#
+# Kenapa penting di proyek microservices? Jumlah dependency-nya besar
+# (9 modul Maven + Next.js), jadi kerentanan CVE mudah terlewat.
+#
+# Catatan: pembaruan untuk Spring Boot dan Spring Cloud dipisah karena
+# KEDUANYA HARUS NAIK BERSAMAAN. Lihat docs/02-architecture.md bagian
+# "Versi & kompatibilitas".
+# =====================================================================
+version: 2
+updates:
+  # ---- Maven (backend) ----
+  - package-ecosystem: maven
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "backend"]
+    commit-message:
+      prefix: "chore(deps)"
+    ignore:
+      # Spring Boot & Spring Cloud harus di-update manual, dalam satu PR,
+      # setelah membaca catatan kompatibilitas versinya.
+      - dependency-name: "org.springframework.boot:*"
+      - dependency-name: "org.springframework.cloud:*"
+
+  - package-ecosystem: maven
+    directory: /backend
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 1
+    labels: ["dependencies", "backend", "needs-review"]
+    commit-message:
+      prefix: "chore(deps)"
+    allow:
+      - dependency-name: "org.springframework.boot:*"
+      - dependency-name: "org.springframework.cloud:*"
+
+  # ---- npm (frontend) ----
+  - package-ecosystem: npm
+    directory: /frontend/web
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "frontend"]
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      # Satukan React + Next dalam satu PR supaya tidak ada versi campuran.
+      next-react:
+        patterns: ["next", "react", "react-dom", "eslint-config-next"]
+
+  # ---- Docker ----
+  - package-ecosystem: docker
+    directory: /backend
+    schedule:
+      interval: monthly
+    labels: ["dependencies", "docker"]
+    commit-message:
+      prefix: "chore(docker)"
+
+  # ---- GitHub Actions ----
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels: ["dependencies", "ci"]
+    commit-message:
+      prefix: "chore(ci)"

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.shopflow</groupId>
+        <artifactId>shopflow-backend</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>platform-common</artifactId>
+    <name>platform-common</name>
+    <description>Library bersama: error handling, PageResponse, correlation id, CurrentUser, kontrak event</description>
+
+    <dependencies>
+        <!-- Library ini BUKAN aplikasi: tidak ada spring-boot-maven-plugin di sini. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <!--
+          spring-data-commons hanya dipakai PageResponse (konversi Page -> DTO).
+          optional=true: service yang tidak memakai JPA (mis. cart-service, api-gateway)
+          tidak ikut menarik dependency ini.
+        -->
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-commons</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!--
+          optional = true  ->  dependency ini TIDAK ikut "bocor" ke service yang memakai platform-common.
+          Penting: api-gateway berbasis WebFlux/Netty; kalau spring-webmvc bocor ke sana,
+          Spring Cloud Gateway akan gagal start.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!--
+          Feign hanya dipakai service yang memang memanggil service lain.
+          optional=true -> tidak ikut ke cart-service/api-gateway dsb.
+        -->
+        <dependency>
+            <groupId>io.github.openfeign</groupId>
+            <artifactId>feign-core</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!--
+          Spring AMQP hanya dipakai service yang menerbitkan/mengonsumsi event.
+          optional=true -> user-service dan api-gateway tidak ikut menariknya,
+          dan RabbitEventSupportAutoConfiguration otomatis tidak aktif di sana.
+
+          Dependensi inilah yang membuat konfigurasi MessageConverter (termasuk
+          daftar trusted-packages) cukup ditulis SEKALI di platform-common.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+              Penting: matikan repackage untuk modul library, supaya JAR-nya bisa dipakai
+              sebagai dependency biasa (bukan fat-jar).
+            -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -1,0 +1,16 @@
+# Konteks build = folder ./backend
+# Kecualikan apa pun yang tidak dibutuhkan proses build Maven.
+
+**/target/
+**/.git
+**/.gitignore
+**/*.iml
+**/.idea
+**/.vscode
+**/*.md
+**/mvnw
+**/mvnw.cmd
+**/.mvn/wrapper/maven-wrapper.jar.tmp
+
+# Tooling lokal (kalau ada yang tersalin)
+.tooling/

@@ -1,0 +1,34 @@
+# Normalisasi line ending: LF di repo, apa pun OS-nya.
+#
+# Tanpa ini, kontributor Windows akan meng-commit CRLF dan setiap PR terlihat
+# seperti "seluruh file berubah" walau isinya sama.
+* text=auto eol=lf
+
+# File yang WAJIB tetap CRLF supaya bisa dijalankan di Windows.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Skrip shell harus tetap LF, kalau tidak akan error "bad interpreter".
+*.sh text eol=lf
+mvnw text eol=lf
+
+# File biner: jangan pernah dinormalisasi.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.jar  binary
+*.woff binary
+*.woff2 binary
+*.pdf  binary
+
+# SQL dan YAML jangan di-diff sebagai teks yang bisa "dirapikan" sembarangan.
+*.sql  text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+
+# Skema linguist: tandai folder vendor/generated supaya statistik bahasa di GitHub wajar.
+frontend/web/.next/** linguist-generated=true
+**/target/**           linguist-generated=true
+frontend/web/pnpm-lock.yaml linguist-generated=true

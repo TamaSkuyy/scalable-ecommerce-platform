@@ -1,0 +1,16 @@
+# Pengaturan pnpm untuk aplikasi Next.js.
+#
+# Konfigurasi ini sengaja minimal. Kalau kamu perlu memindahkan lokasi store pnpm
+# (mis. di CI atau sandbox yang tidak bisa menulis ke $HOME), tambahkan di sini:
+#
+#     storeDir: .pnpm-store
+#
+# JANGAN commit path absolut — itu akan merusak build di mesin orang lain.
+
+# Dua paket ini punya build script native yang tidak kita perlukan saat install:
+#   sharp         -> dipakai Next.js untuk image optimization (kita pakai images.unoptimized)
+#   unrs-resolver -> resolver untuk ESLint (binary-nya sudah disertakan)
+# Menyetujui build script-nya memperlambat install tanpa memberi manfaat.
+allowBuilds:
+  sharp: false
+  unrs-resolver: false

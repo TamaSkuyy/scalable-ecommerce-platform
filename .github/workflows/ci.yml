@@ -1,0 +1,118 @@
+name: CI
+
+# Tahap 4 dari roadmap: pipeline otomatis.
+# Tujuan: tidak ada kode yang masuk `main` tanpa pernah dibuild & ditest.
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+# Batalkan run lama untuk branch yang sama (hemat menit CI).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: "21"
+  NODE_VERSION: "22"
+
+jobs:
+  # ===================================================================
+  # 1. Backend: compile semua modul + jalankan unit test
+  # ===================================================================
+  backend:
+    name: Backend (Java ${{ github.event_name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Build & test semua modul
+        working-directory: backend
+        run: ./mvnw -B -ntp verify
+
+      - name: Upload laporan test
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-surefire-reports
+          path: backend/**/target/surefire-reports/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ===================================================================
+  # 2. Frontend: typecheck + lint + build produksi
+  # ===================================================================
+  frontend:
+    name: Frontend (Next.js)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend/web
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      API_BASE_URL: http://localhost:8080
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: frontend/web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        run: pnpm build
+
+  # ===================================================================
+  # 3. Smoke test Docker build untuk 2 service (bukan 9, supaya cepat)
+  # ===================================================================
+  docker:
+    name: Docker build (smoke test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [backend]
+    if: github.event_name == 'push'
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [api-gateway, product-service]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image ${{ matrix.module }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          build-args: |
+            MODULE=${{ matrix.module }}
+          push: false
+          load: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

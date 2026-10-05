@@ -1,0 +1,48 @@
+# =====================================================================
+# Konfigurasi non-rahasia.
+# Nilai rahasia (password, JWT_SECRET, INTERNAL_API_TOKEN) ada di Secret
+# `shopflow-secrets` yang dibuat manual - lihat README.md di folder ini.
+#
+# Di produksi, pertimbangkan ConfigMap per environment (staging/production)
+# lewat Kustomize overlay, bukan satu ConfigMap untuk semua.
+# =====================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shopflow-config
+  namespace: shopflow
+data:
+  # Nama service Kubernetes. Tidak ada Service bernama ini, jadi ganti dengan
+  # Service Eureka yang sesungguhnya (lihat catatan di bawah).
+  EUREKA_URL: "http://discovery-service:8761/eureka/"
+
+  RABBITMQ_HOST: "rabbitmq"
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_USER: "shopflow"
+
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+
+  # Nama database per service (PostgreSQL dikelola terpisah / layanan terkelola).
+  POSTGRES_HOST: "postgres"
+  POSTGRES_PORT: "5432"
+
+  JWT_ISSUER: "shopflow-identity"
+  JWT_ACCESS_TOKEN_TTL: "30m"
+
+  CORS_ALLOWED_ORIGINS: "https://shopflow.example.com"
+
+  TZ: "Asia/Jakarta"
+
+# ---------------------------------------------------------------------
+# CATATAN PENTING
+#
+# ConfigMap ini hanya contoh. Yang perlu kamu sesuaikan:
+#   1. EUREKA_URL -> harus menunjuk ke Service Eureka yang benar
+#   2. RABBITMQ_HOST / REDIS_HOST / POSTGRES_HOST -> StatefulSet atau
+#      layanan terkelola (AWS RDS, ElastiCache, Amazon MQ, dst.)
+#   3. CORS_ALLOWED_ORIGINS -> domain frontend kamu yang sesungguhnya
+#
+# Tips: untuk mengurangi jumlah objek, setiap service bisa memakai ConfigMap
+# yang sama dan hanya menambahkan DB_URL-nya sendiri lewat env di Deployment.
+# ---------------------------------------------------------------------

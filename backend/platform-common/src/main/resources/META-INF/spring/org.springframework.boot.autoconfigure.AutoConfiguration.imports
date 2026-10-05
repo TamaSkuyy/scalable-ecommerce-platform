@@ -1,0 +1,3 @@
+com.shopflow.common.PlatformCommonAutoConfiguration
+com.shopflow.common.feign.FeignSupportAutoConfiguration
+com.shopflow.common.events.RabbitEventSupportAutoConfiguration
